@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPY HUNT // Tactical Social Deduction</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1.3">
+</head>
+<body class="cyber-theme">
+  <!-- Scanlines overlay for CRT effect -->
+  <div class="scanlines"></div>
+  <div class="glow-overlay"></div>
+
+  <!-- Audio initialization helper -->
+  <div id="audio-prompt" class="audio-banner hidden">
+    <span>[!] Audio offline. Click to authorize neural audio synth.</span>
+    <button id="btn-enable-audio">AUTHORIZE</button>
+  </div>
+
+  <div class="app-container">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="logo-container">
+        <span class="glitch-text" data-text="SPY HUNT">SPY HUNT</span>
+        <span class="sub-logo">SYSTEM v2.86.0</span>
+      </div>
+      <button id="btn-rules" class="btn-secondary font-mono">[HELP_FILES]</button>
+    </header>
+
+    <!-- MAIN VIEWPORT -->
+    <main class="viewport">
+
+      <!-- VIEW 1: SETUP -->
+      <section id="view-setup" class="game-view active">
+        <div class="setup-card glass-panel">
+          <div class="setup-tabs">
+            <button id="tab-local" class="setup-tab active font-orbitron">LOCAL_MISSION</button>
+            <button id="tab-online" class="setup-tab font-orbitron">COVERT_NETWORK</button>
+          </div>
+
+          <!-- LOCAL MODE SETUP AREA -->
+          <div id="setup-local-area" class="setup-mode-area">
+            <h2 class="view-title font-orbitron text-cyan">INITIALIZE PROTOCOL</h2>
+            <p class="view-subtitle font-mono">Configure session participants & neural net parameters</p>
+            
+            <div class="setup-grid">
+              <!-- Left Column: Parameters -->
+              <div class="setup-form">
+                <div class="form-group">
+                  <label class="font-orbitron">TOTAL AGENTS</label>
+                  <div class="radio-group font-orbitron">
+                    <input type="radio" id="players-2" name="total-players" value="2">
+                    <label for="players-2">2</label>
+                    <input type="radio" id="players-3" name="total-players" value="3">
+                    <label for="players-3">3</label>
+                    <input type="radio" id="players-4" name="total-players" value="4" checked>
+                    <label for="players-4">4</label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="font-orbitron">HUMAN OPERATIVES</label>
+                  <div class="radio-group font-orbitron" id="human-selection">
+                    <!-- Generated dynamically based on total players -->
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="font-orbitron" for="select-timer">ROUND TIMER</label>
+                  <select id="select-timer" class="font-mono">
+                    <option value="60">1:00 MIN (BLITZ)</option>
+                    <option value="120">2:00 MIN</option>
+                    <option value="180" selected>3:00 MIN (STANDARD)</option>
+                    <option value="300">5:00 MIN</option>
+                    <option value="480">8:00 MIN</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Right Column: Player Names -->
+              <div class="setup-players">
+                <label class="font-orbitron label-players">OPERATIVE IDENTIFIERS</label>
+                <div id="player-names-container" class="names-list">
+                  <!-- Dynamically populated name inputs -->
+                </div>
+              </div>
+            </div>
+
+            <div class="setup-actions">
+              <button id="btn-start-game" class="btn-primary font-orbitron pulse-cyan">ENGAGE MISSION</button>
+            </div>
+          </div>
+
+          <!-- ONLINE MODE SETUP AREA -->
+          <div id="setup-online-area" class="setup-mode-area hidden">
+            <h2 class="view-title font-orbitron text-magenta">ESTABLISH COVERT LINK</h2>
+            <p class="view-subtitle font-mono">Sync neural interfaces across remote terminals</p>
+
+            <!-- Pre-Lobby Actions -->
+            <div id="online-prelobby-view">
+              <div class="setup-grid">
+                <div class="setup-form">
+                  <div class="form-group">
+                    <label class="font-orbitron" for="input-online-name">YOUR IDENTITY</label>
+                    <input type="text" id="input-online-name" class="input-custom-answer font-mono" placeholder="Enter codename..." maxLength="15" value="Agent Fox">
+                  </div>
+                  
+                  <div class="online-button-grid" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button id="btn-create-lobby-trigger" class="btn-primary font-orbitron flex-1">CREATE LOBBY</button>
+                    <button id="btn-join-lobby-trigger" class="btn-secondary font-orbitron flex-1">JOIN LOBBY</button>
+                  </div>
+                </div>
+
+                <div class="setup-players glass-subpanel font-mono text-xs">
+                  <span class="text-cyan font-orbitron font-bold">COVERT PROTOCOL LOGS</span>
+                  <div id="online-conn-status" style="margin-top: 0.5rem; line-height: 1.6; color: var(--text-muted);">
+                    [System] Web socket connection dormant.<br>
+                    [System] Select "Create" or "Join" to dial into the network.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hidden Join Inputs -->
+              <div id="online-join-fields" class="form-group hidden" style="margin-top: 1.5rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                <label class="font-orbitron" for="input-room-code">ROOM ENCRYPTION CODE</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" id="input-room-code" class="input-custom-answer font-mono" placeholder="ABCD" maxLength="4" style="text-transform: uppercase; width: 150px; text-align: center; font-size: 1.2rem;">
+                  <button id="btn-connect-room" class="btn-primary font-orbitron">CONNECT</button>
+                  <button id="btn-back-to-prelobby" class="btn-secondary font-mono">BACK</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- In-Lobby Display -->
+            <div id="online-lobby-view" class="hidden">
+              <div class="setup-grid">
+                <!-- Lobby Status & Settings -->
+                <div class="setup-form">
+                  <div class="lobby-code-banner font-orbitron text-center" style="background: rgba(255,0,127,0.08); border: 1px solid var(--border-magenta); border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <span class="text-xs text-muted font-mono" style="display: block;">LOBBY ACCESS KEY</span>
+                    <span id="lobby-code-display" class="text-magenta text-glow font-bold" style="font-size: 2.2rem; letter-spacing: 4px;">ABCD</span>
+                  </div>
+
+                  <div id="lobby-settings-controls" class="hidden">
+                    <div class="form-group">
+                      <label class="font-orbitron">LOBBY CAPACITY</label>
+                      <div class="radio-group font-orbitron">
+                        <input type="radio" id="online-players-2" name="online-total-players" value="2">
+                        <label for="online-players-2">2</label>
+                        <input type="radio" id="online-players-3" name="online-total-players" value="3">
+                        <label for="online-players-3">3</label>
+                        <input type="radio" id="online-players-4" name="online-total-players" value="4" checked>
+                        <label for="online-players-4">4</label>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="font-orbitron" for="online-select-timer">ROUND TIMER</label>
+                      <select id="online-select-timer" class="font-mono">
+                        <option value="60">1:00 MIN (BLITZ)</option>
+                        <option value="120">2:00 MIN</option>
+                        <option value="180" selected>3:00 MIN (STANDARD)</option>
+                        <option value="300">5:00 MIN</option>
+                        <option value="480">8:00 MIN</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div id="lobby-guest-message" class="font-mono text-center text-xs text-muted" style="margin-top: 2rem;">
+                    [Syncing] Awaiting host to launch mission parameters...
+                  </div>
+                </div>
+
+                <!-- Lobby Members List -->
+                <div class="setup-players">
+                  <label class="font-orbitron label-players">CONNECTED OPERATIVES</label>
+                  <div id="online-lobby-players" class="names-list font-mono text-sm" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- List of players currently in lobby -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="setup-actions" style="margin-top: 1.5rem;">
+                <button id="btn-disconnect-lobby" class="btn-secondary font-orbitron" style="margin-right: auto;">ABORT LINK</button>
+                <button id="btn-start-online-game" class="btn-primary font-orbitron pulse-cyan hidden">LAUNCH MISSION</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: PASS AND PLAY REVEAL -->
+      <section id="view-reveal" class="game-view">
+        <div class="reveal-card glass-panel">
+          <div class="secure-header font-mono">
+            <span class="status-indicator blinking-red"></span>
+            <span>SECURE TRANSMISSION PROTOCOL</span>
+          </div>
+
+          <div class="reveal-instruction">
+            <h3 class="font-orbitron">HAND DEVICE TO</h3>
+            <h1 id="reveal-player-name" class="font-orbitron text-magenta text-glow">OPERATIVE 1</h1>
+            <p class="font-mono text-muted">Ensure other operatives cannot view the terminal screen.</p>
+          </div>
+
+          <!-- Flip Card Container -->
+          <div class="card-container">
+            <div id="id-card" class="id-card">
+              <div class="card-front">
+                <div class="card-inner-glow"></div>
+                <div class="fingerprint-scanner">
+                  <div class="scan-laser"></div>
+                  <svg class="fingerprint-icon" viewBox="0 0 100 100">
+                    <path d="M50,15 A35,35 0 0,1 85,50 A5,5 0 0,1 75,50 A25,25 0 0,0 50,25 A25,25 0 0,0 25,50 A5,5 0 0,1 15,50 A35,35 0 0,1 50,15 Z" fill="currentColor"/>
+                    <path d="M50,5 A45,45 0 0,1 95,50 A5,5 0 0,1 85,50 A35,35 0 0,0 50,15 A35,35 0 0,0 15,50 A5,5 0 0,1 5,50 A45,45 0 0,1 50,5 Z" fill="currentColor"/>
+                    <path d="M50,25 A25,25 0 0,1 75,50 A5,5 0 0,1 65,50 A15,15 0 0,0 50,35 A15,15 0 0,0 35,50 A5,5 0 0,1 25,50 A25,25 0 0,1 50,25 Z" fill="currentColor"/>
+                    <path d="M50,35 A15,15 0 0,1 65,50 A5,5 0 0,1 55,50 A5,5 0 0,0 50,45 A5,5 0 0,0 45,50 A5,5 0 0,1 35,50 A15,15 0 0,1 50,35 Z" fill="currentColor"/>
+                    <circle cx="50" cy="50" r="5" fill="currentColor"/>
+                  </svg>
+                </div>
+                <button id="btn-reveal-card" class="btn-primary font-orbitron">AUTHENTICATE BIOMETRICS</button>
+              </div>
+              <div class="card-back">
+                <div class="scanner-line"></div>
+                <div class="card-back-content">
+                  <div class="card-role-title font-orbitron" id="card-status-title">AGENT STATUS</div>
+                  <div id="card-identity-box">
+                    <!-- Spy or Agent role info -->
+                  </div>
+                  <div class="possible-locations-box">
+                    <span class="font-orbitron section-title">CANDIDATE LOCATIONS</span>
+                    <div id="card-locations-list" class="locations-grid font-mono">
+                      <!-- List of locations for Spy context -->
+                    </div>
+                  </div>
+                  <button id="btn-memorized" class="btn-primary font-orbitron">MEMORIZED & SECURE</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: GAMEPLAY CONSOLE -->
+      <section id="view-gameplay" class="game-view">
+        <div class="game-layout">
+          
+          <!-- LEFT COLUMN: STATUS & CONSOLE LOG -->
+          <div class="game-left-col">
+            <!-- STATUS DASHBOARD -->
+            <div class="status-panel glass-panel">
+              <div class="timer-box">
+                <span class="font-mono text-muted text-xs">TIME REMAINING</span>
+                <span id="game-timer" class="font-orbitron text-magenta blinking-low">03:00</span>
+              </div>
+              <div class="turn-box">
+                <span class="font-mono text-muted text-xs">ACTIVE TRANSMITTER</span>
+                <span id="active-player-display" class="font-orbitron text-cyan">OPERATIVE 1</span>
+              </div>
+            </div>
+
+            <!-- TERMINAL LOG -->
+            <div class="terminal-panel glass-panel">
+              <div class="panel-header font-mono">
+                <span class="terminal-dot green"></span>
+                <span>COMMS_FEED_STREAM.LOG</span>
+              </div>
+              <div id="terminal-log" class="terminal-log font-mono">
+                <!-- Log entries will be added here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: DEDUCTION BOARD & CONTROLS -->
+          <div class="game-right-col">
+            <!-- DEDUCTION SHEET -->
+            <div class="deduction-panel glass-panel">
+              <div class="panel-header font-orbitron text-cyan">
+                <span>DEDUCTION SCRATCHPAD</span>
+              </div>
+              <div class="panel-desc font-mono text-xs text-muted">Toggle candidate locations to filter out decoys</div>
+              <div id="scratchpad-locations" class="scratchpad-grid font-mono">
+                <!-- Locations to cross off -->
+              </div>
+            </div>
+
+            <!-- INTEL CENTER (CONTROLS) -->
+            <div class="controls-panel glass-panel">
+              <div class="panel-header font-orbitron text-magenta">
+                <span>INTEL ACTION CONSOLE</span>
+              </div>
+
+              <div id="console-action-area" class="console-area">
+                <!-- Dynamically loaded depending on whose turn and phase -->
+              </div>
+
+              <!-- GLOBAL INSTANT ACTIONS -->
+              <div class="global-actions">
+                <button id="btn-accuse-global" class="btn-danger font-orbitron">ACCUSE OPERATIVE</button>
+                <button id="btn-guess-global" class="btn-warning font-orbitron hidden">GUESS LOCATION</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 4: GAME OVER / REPORT -->
+      <section id="view-gameover" class="game-view">
+        <div class="gameover-card glass-panel">
+          <div class="gameover-banner font-orbitron" id="gameover-outcome">
+            DEBRIEFING_
+          </div>
+          
+          <div class="debriefing-grid">
+            <!-- Left side: Mission Stats -->
+            <div class="debrief-stats font-mono glass-subpanel">
+              <h3 class="font-orbitron text-cyan">MISSION INTEL</h3>
+              <div class="stat-row">
+                <span>SECRET LOCATION:</span>
+                <span id="debrief-location" class="text-cyan font-bold">CLASSIFIED</span>
+              </div>
+              <div class="stat-row">
+                <span>SPY IDENTITY:</span>
+                <span id="debrief-spy" class="text-magenta font-bold">CLASSIFIED</span>
+              </div>
+              <div class="stat-row">
+                <span>ELAPSED TIME:</span>
+                <span id="debrief-time">0:00</span>
+              </div>
+              <div class="stat-row">
+                <span>WIN CONDITION:</span>
+                <span id="debrief-win-reason">REVEALED</span>
+              </div>
+            </div>
+
+            <!-- Right side: Operative breakdown -->
+            <div class="debrief-operatives glass-subpanel">
+              <h3 class="font-orbitron text-cyan">OPERATIVE DOSSIERS</h3>
+              <div id="debrief-players-list" class="font-mono">
+                <!-- Dynamic player role details + suspicion details -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Visualizing AI logs/Suspicion -->
+          <div class="ai-logs-container glass-subpanel font-mono">
+            <h3 class="font-orbitron text-cyan font-xs">AI NEURAL LOG (DEDUCTION ANALYSIS)</h3>
+            <div id="ai-logs-content" class="ai-logs-content text-xs">
+              <!-- Logs showing how AI computed locations/suspicion -->
+            </div>
+          </div>
+
+          <div class="gameover-actions">
+            <button id="btn-restart" class="btn-primary font-orbitron">NEW MISSION FILE</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: HELP / RULES -->
+  <div id="modal-rules" class="modal-overlay hidden">
+    <div class="modal-content glass-panel font-mono">
+      <div class="modal-header">
+        <h2 class="font-orbitron text-cyan">SPY HUNT FIELD MANUAL</h2>
+        <button id="btn-close-rules" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h3>OVERVIEW</h3>
+        <p>A secret transmission has been intercepted. One operative is a <strong>Spy</strong> trying to steal blueprints. The rest are <strong>Agents</strong> trying to root out the traitor.</p>
+        
+        <h3>GAMEPLAY</h3>
+        <ul>
+          <li><strong>Agents</strong> are briefed on the <strong>Location</strong> and their specific <strong>Role</strong>.</li>
+          <li>The <strong>Spy</strong> has no briefing and only knows they are the Spy.</li>
+          <li>Operatives take turns asking one another questions to probe for suspicious details without directly naming the location (which would give it away to the Spy).</li>
+          <li><strong>Digital Mode:</strong> You ask questions by choosing topics (e.g. noise levels, clothing) and answering using logical indicators. AI agents will evaluate answers and adjust their suspicion metrics.</li>
+        </ul>
+
+        <h3>WIN CONDITIONS</h3>
+        <ul>
+          <li><strong>Agents Win:</strong> By successfully voting out the Spy in an Accusation, or if the Spy guesses the location incorrectly.</li>
+          <li><strong>Spy Wins:</strong> By guessing the correct location, or if the Agents vote out an innocent Agent during an Accusation, or if the timer runs out.</li>
+        </ul>
+
+        <h3>ACCUSATION & VOTING</h3>
+        <ul>
+          <li>Any player can accuse someone of being the Spy.</li>
+          <li>An accusation triggers a vote. If the accused player receives a majority of <strong>GUILTY</strong> votes, the game ends.</li>
+          <li>AIs vote based on their internal suspicion scores, which rise when players give answers that conflict with the location attributes.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ACCUSATION / VOTING SCREEN -->
+  <div id="modal-vote" class="modal-overlay hidden">
+    <div class="modal-content glass-panel font-mono">
+      <div class="modal-header">
+        <h2 class="font-orbitron text-magenta blinking">EMERGENCY ACCUSATION PROTOCOL</h2>
+      </div>
+      <div class="modal-body text-center">
+        <p class="font-lg">
+          <strong id="vote-accuser-name" class="text-cyan">AGENT 1</strong> has accused 
+          <strong id="vote-accused-name" class="text-magenta">AGENT 2</strong> of espionage!
+        </p>
+
+        <div class="voting-matrix">
+          <div class="voting-list" id="voting-players-status">
+            <!-- List of players and their vote status -->
+          </div>
+        </div>
+
+        <div id="human-voting-controls" class="human-vote-box hidden">
+          <p class="text-glow font-orbitron font-sm">CAST YOUR VERDICT, <span id="voting-human-name" class="text-cyan">PLAYER</span>:</p>
+          <div class="vote-buttons">
+            <button id="btn-vote-guilty" class="btn-danger font-orbitron">GUILTY</button>
+            <button id="btn-vote-innocent" class="btn-success font-orbitron">INNOCENT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SPY LOCATION GUESSING -->
+  <div id="modal-guess" class="modal-overlay hidden">
+    <div class="modal-content glass-panel font-mono">
+      <div class="modal-header">
+        <h2 class="font-orbitron text-warning">TRANSMIT ENCRYPTED LOCATION</h2>
+      </div>
+      <div class="modal-body">
+        <p class="text-center font-sm">As the Spy, guess the location to hijack the mission. A wrong guess leads to immediate arrest.</p>
+        <div id="spy-guess-list" class="guess-locations-grid">
+          <!-- Dynamically loaded location buttons -->
+        </div>
+        <div class="modal-footer text-center">
+          <button id="btn-cancel-guess" class="btn-secondary font-orbitron">ABORT TRANSMISSION</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=1.3"></script>
+</body>
+</html>
